@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { useQuery, gql, useMutation } from '@apollo/client';
 
-const gqlGetSpeakers = gql`
+const GET_SPEAKERS = gql`
   query getSpeakers {
     speakers {
       id
@@ -12,6 +12,16 @@ const gqlGetSpeakers = gql`
     }
   }
 `
+const GET_SPEAKER = gql`
+  query getSpeaker($id: Int!) {
+    speaker(id: $id) {
+      id
+      name
+      bio
+      webSite
+    }
+  }
+`;
 
 const ADD_SPEAKER = gql`
   mutation AddSpeaker ($name: String!, $bio: String!, $webSite : String!) {
@@ -48,7 +58,13 @@ function App() {
 }
 
 function DisplaySpeakers() {
-  const { loading, error, data } = useQuery(gqlGetSpeakers);
+  const { loading, error, data } = useQuery(GET_SPEAKERS);
+  const [deleteSpeaker] = useMutation(DELETE_SPEAKER,{
+    refetchQueries: [{ query: GET_SPEAKERS }]
+  });
+  const DeleteSpeaker = (id) => {
+    deleteSpeaker({ variables: { id: id }, awaitRefetchQueries : true  });
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error : {error.message}</p>;
@@ -75,7 +91,7 @@ function DisplaySpeakers() {
             <td>{name}</td>
             <td>{bio}</td>
             <td>{webSite}</td>
-            <td><button id={'btnEdit-'+id}   value={id} >Edit</button> | <button id={'btnDelete-'+id} value={id} onClick={() => DeleteSpeaker(id)} >Delete</button></td>
+            <td><button value={id} onClick={() => DeleteSpeaker(id)} >Delete</button></td>
           </tr>
         ))}
       </tbody>
@@ -87,8 +103,10 @@ function DisplaySpeakers() {
 
 function AddSpeaker() {
   let input;
-  const [addNewSpeaker, { data, loading, error }] = useMutation(ADD_SPEAKER);
-
+  const [addNewSpeaker, { data, loading, error }] = useMutation(ADD_SPEAKER,{
+    refetchQueries: [{ query: GET_SPEAKERS }]
+  });
+  
   if (loading) return 'Submitting...';
   if (error) return `Submission error! ${error}`;
 
@@ -97,13 +115,13 @@ function AddSpeaker() {
       <form
         onSubmit={e => {
           e.preventDefault();
-          addNewSpeaker({ variables: { name: input.value, bio : input.value, webSite : input.value} });
+          addNewSpeaker({ variables: { name: input.value, bio : input.value, webSite : input.value}, awaitRefetchQueries : true });
           input.value = '';
         }}
       >
         <div>
           <p>Add new speaker</p>
-          <input
+          <input required 
            ref={node => {
             input = node;
           }}
@@ -116,12 +134,12 @@ function AddSpeaker() {
            ref={node => {
             input = node;
           }}
-            type="text"
+            type="text" required 
             placeholder="Enter speaker bio"
           />
           <br />
           <br />
-          <input
+          <input required 
             ref={node => {
               input = node;
             }}
@@ -137,8 +155,5 @@ function AddSpeaker() {
   );
 }
 
-function DeleteSpeaker(id){
-  //const [deleteSpeaker, { data, loading, error }] = useMutation(DELETE_SPEAKER);
-}
 
 export default App;
