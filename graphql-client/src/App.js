@@ -26,6 +26,18 @@ const ADD_SPEAKER = gql`
 }
 `;
 
+const DELETE_SPEAKER = gql`
+mutation DeleteSpeaker($id: Int!) {
+  deleteSpeaker(id: $id) {
+    speaker {
+      id
+      name
+      bio
+    }
+  }
+}
+`;
+
 function App() {
   return (
     <div className="App">
@@ -40,17 +52,37 @@ function DisplaySpeakers() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error : {error.message}</p>;
+  
+  return(  <div>
+    <table style={{padding : '10px'}}>
+      <colgroup>
+        <col width="10%" />
+        <col width="60%" />
+        <col width="20%" />
+        <col width="10%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Bio</th>
+          <th>Website</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.speakers.map(({ bio, name, id, webSite }) => (
+          <tr key={id}>
+            <td>{name}</td>
+            <td>{bio}</td>
+            <td>{webSite}</td>
+            <td><button id={'btnEdit-'+id}   value={id} >Edit</button> | <button id={'btnDelete-'+id} value={id} onClick={() => DeleteSpeaker(id)} >Delete</button></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
 
-  return data.speakers.map(({ bio, name, id }) => (
-    <div key={id}>
-      <h3>{name}</h3>
-      <br />
-      <p>{bio}</p>
-      <br />
-      <p>{id}</p>
-      <br />
-    </div>
-  ));
+  </div>
+  );
 }
 
 function AddSpeaker() {
@@ -103,6 +135,10 @@ function AddSpeaker() {
       </form>
     </div>
   );
+}
+
+function DeleteSpeaker(id){
+  //const [deleteSpeaker, { data, loading, error }] = useMutation(DELETE_SPEAKER);
 }
 
 export default App;
